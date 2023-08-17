@@ -1,4 +1,5 @@
 ﻿using System;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using peopleApi.Models;
 using peopleApi.Services;
@@ -21,7 +22,7 @@ public class PeopleController : ControllerBase
         await _mongoDBService.GetAsync();
 
 
-    [HttpGet("{id:length(1)}")]
+    [HttpGet("{id:length(11)}")]
     public async Task<ActionResult<People>> Get(string id)
     {
         var person = await _mongoDBService.GetAsync(id);
@@ -42,7 +43,7 @@ public class PeopleController : ControllerBase
         return CreatedAtAction(nameof(Get), new { id = newPerson.Id }, newPerson);
     }
 
-    [HttpPut("{id:int}")]
+    [HttpPut("{id:length(11)}")]
     public async Task<IActionResult> Put(string id, People person) {
 
         var currentPerson = await _mongoDBService.GetAsync(id);
@@ -73,7 +74,7 @@ public class PeopleController : ControllerBase
         return NoContent();
     }
 
-    [HttpDelete("{id:int}")]
+    [HttpDelete("{id:length(11)}")]
     public async Task<IActionResult> Delete(string id) {
         
         var person = await _mongoDBService.GetAsync(id);
@@ -87,12 +88,38 @@ public class PeopleController : ControllerBase
         return NoContent();
     }
 
-    //[HttpPatch("{id:int}")]
-    /*public IActionResult PartiallyUpdateOnePerson()
+    [HttpPatch("{id:length(11)}")]
+    public async Task<IActionResult> PatchAsync(string id, [FromBody] JsonPatchDocument<People> patchDoc)
     {
-       
-       
-    }*/
+        if (patchDoc == null)
+        {
+            return BadRequest();
+        }
+
+        var existingItem = await _mongoDBService.GetAsync(id);
+        if (existingItem == null)
+        {
+            return NotFound();
+        }
+
+        patchDoc.ApplyTo(existingItem, ModelState);
+
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        try
+        {
+            await _mongoDBService.UpdateAsync(id,existingItem);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
+
+        return NoContent();
+    }
 }
 
 

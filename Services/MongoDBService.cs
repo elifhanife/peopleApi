@@ -2,7 +2,9 @@
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using MongoDB.Bson;
-
+using Microsoft.AspNetCore.JsonPatch;
+using System.Net.Http;
+using System.Text;
 
 namespace peopleApi.Services
 {
@@ -37,7 +39,7 @@ namespace peopleApi.Services
         //PUT
         public async Task<People?> UpdateAsync(string id, People person)
         {
-            var updateResult = await _peopleCollection.ReplaceOneAsync(p => p.Id == id, person);
+            var updateResult = await _peopleCollection.ReplaceOneAsync(p => p.No == id, person);
 
             return await this.GetAsync(id);
         }
@@ -49,7 +51,8 @@ namespace peopleApi.Services
 
         //DELETE ONE PERSON
         public async Task DeleteAsync(string id) =>
-            await _peopleCollection.DeleteOneAsync(p => p.Id == id);
+            await _peopleCollection.DeleteOneAsync(p => p.No == id);
+
     }
 
 }
